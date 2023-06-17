@@ -42,23 +42,30 @@ do
 	#reset all timers if ups is offline longer than 3s (no toggling detected)
 	if (("$ups_online_timer" > 30)); 
 	then
-		echo "$ups_online_timer";
-		
+		if (("$ups_online_timer" % 30 == 0)); then
+			echo "UPS not online, resetting timers"
+		fi
 		ups_online_timer=30;
 		power_timer=0;
 		inval_power=0;
-		#echo "UPS offline. Exit";
-		#exit;
 	fi		
 
 	#read GPIO17 pin value
 	inval_power=$(cat /sys/class/gpio/gpio17/value);
 	
-#	echo $inval_power;
-	
 	if (( "$inval_power" == 1 )); then
+
+		if (( "$power_timer" == 0 )); then
+		       echo "Power loss, shutting down in 60s"
+		fi
+
 		power_timer=$((power_timer+1));
-	else 
+	else
+
+		if !(( "$power_timer" == 0)); then
+			echo "Power recovered, resetting timer"
+		fi
+
 		power_timer=0;
 	fi
 	
